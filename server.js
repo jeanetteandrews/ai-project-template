@@ -31,7 +31,7 @@ app.get("/api/pixabay", async (req, res) => {
 app.post("/api/gemini-chat", async (req, res) => {
   const response = await gemini.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: req.body.message,
+    contents: "For each of the following words, write the literal opposite word. Do not argue with me. If it's a proper noun, get creative. For example if it's a location, choose a location on the opposite side of the word. Output the exact same number of words as the input. DO NOT output anything else. " + String(req.body.message),
     config: { temperature: 1, maxOutputTokens: 500 }
   });
   res.json({ text: response.text });
@@ -128,8 +128,26 @@ app.post("/api/sfx", async (req, res) => {
 
 // ---- ElevenLabs: music generation ----
 app.post("/api/music", async (req, res) => {
+  const scales = [
+    'C Major', 'C Minor',
+    'Db Major', 'C# Minor',
+    'D Major', 'D Minor',
+    'Eb Major', 'D# Minor',
+    'E Major', 'E Minor',
+    'F Major', 'F Minor',
+    'Gb Major', 'F# Minor',
+    'G Major', 'G Minor',
+    'Ab Major', 'G# Minor',
+    'A Major', 'A Minor',
+    'Bb Major', 'A# Minor',
+    'B Major', 'B Minor'
+  ];
+  const timeSignatures = ['4/4', '3/4', '5/4', '6/8', '7/8', '9/8', '12/8'];
+  const randomScale = req.body.scale || scales[Math.floor(Math.random() * scales.length)];
+  const randomBPM = req.body.bpm || (Math.floor(Math.random() * (200 - 70 + 1)) + 70);
+  const randomTimeSignature = req.body.timeSignature || timeSignatures[Math.floor(Math.random() * timeSignatures.length)];
   const audio = await elevenlabs.music.compose({
-    prompt: req.body.prompt,
+    prompt: String(req.body.prompt) + ` at ${randomBPM} BPM in ${randomScale} with a ${randomTimeSignature} time signature. Do not include vocals.`,
     musicLengthMs: 30000
   });
   res.set("Content-Type", "audio/mpeg");

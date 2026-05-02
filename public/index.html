@@ -3,28 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI Project Template</title>
+    <title>Opposite Genre Generator</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <h1>AI Project Template</h1>
-    <p>Plain HTML/JS examples for every API. <a href="/sketch.html">p5 sketch →</a></p>
+    <h1>Opposite Genre Generator</h1>
 
-    <div class="widget">
+    <!-- <div class="widget">
       <h3>Pixabay (image search)</h3>
       <input id="pix-q" placeholder="search term" value="frog" />
       <button onclick="runPixabay()">search</button>
       <div id="pix-out"></div>
-    </div>
+    </div> -->
 
     <div class="widget">
-      <h3>Gemini (chat)</h3>
-      <input id="gem-q" placeholder="message" value="say hi" />
+      <h3>Describe a genre...</h3>
+      <input id="gem-q" placeholder="message" />
       <button onclick="runGemini()">send</button>
-      <div id="gem-out"></div>
     </div>
 
-    <div class="widget">
+    <!-- <div class="widget">
       <h3>Cloudflare (chat — Llama 4 Scout)</h3>
       <input id="cf-q" placeholder="message" value="say hi" />
       <button onclick="runCloudflareChat()">send</button>
@@ -57,14 +55,30 @@
       <input id="sfx-q" placeholder="sfx prompt" value="thunder crash" />
       <button onclick="runSfx()">generate</button>
       <div id="sfx-out"></div>
+    </div> -->
+
+    <div class="widget">
+      <!-- <h3>ElevenLabs (music)</h3> -->
+      <input id="music-q"/>
+      <!-- <button onclick="runMusic()">generate</button> -->
+      <div id="music-out"></div>
     </div>
 
     <div class="widget">
-      <h3>ElevenLabs (music)</h3>
-      <input id="music-q" placeholder="music prompt" value="upbeat jazz piano" />
-      <button onclick="runMusic()">generate</button>
-      <div id="music-out"></div>
+      <!-- <h3>ElevenLabs (music)</h3> -->
+      <input id="music-q2"/>
+      <!-- <button onclick="runMusic2()">generate</button> -->
+      <div id="music-out2"></div>
     </div>
+
+    <div class="widget">
+      <!-- <h3>ElevenLabs (music)</h3> -->
+      <input id="music-q3"/>
+      <!-- <button onclick="runMusic3()">generate</button> -->
+      <div id="music-out3"></div>
+    </div>
+
+    <button onclick="playAll()">Play All</button>
 
     <script>
       let lastImageB64 = null;
@@ -83,7 +97,36 @@
           body: JSON.stringify({ message })
         });
         const data = await r.json();
-        document.getElementById('gem-out').textContent = data.error ?? data.text;
+        // Generate shared random scale and BPM
+        const scales = [
+          'C Major', 'C Minor',
+          'Db Major', 'C# Minor',
+          'D Major', 'D Minor',
+          'Eb Major', 'D# Minor',
+          'E Major', 'E Minor',
+          'F Major', 'F Minor',
+          'Gb Major', 'F# Minor',
+          'G Major', 'G Minor',
+          'Ab Major', 'G# Minor',
+          'A Major', 'A Minor',
+          'Bb Major', 'A# Minor',
+          'B Major', 'B Minor'
+        ];
+        const randomScale = scales[Math.floor(Math.random() * scales.length)];
+        const randomBPM = Math.floor(Math.random() * (200 - 70 + 1)) + 70;
+        // Set inputs and generate music
+        document.getElementById('music-q').value = message;
+        runMusic(randomScale, randomBPM);
+        document.getElementById('music-q2').value = data.error ?? data.text;
+        runMusic2(randomScale, randomBPM);
+        // Chain opposites for q3 and q4
+        const r2 = await fetch('/api/gemini-chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: data.error ?? data.text })
+        });
+        const data2 = await r2.json();
+        document.getElementById('music-q3').value = data2.error ?? data2.text;
+        runMusic3(randomScale, randomBPM);
       }
 
       async function runCloudflareChat() {
@@ -147,17 +190,81 @@
         new Audio(URL.createObjectURL(blob)).play();
       }
 
-      async function runMusic() {
+      async function runMusic(scale, bpm) {
         const prompt = document.getElementById('music-q').value;
         const out = document.getElementById('music-out');
         out.textContent = 'generating...';
         const r = await fetch('/api/music', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ prompt, scale, bpm })
         });
         if (!r.ok) { out.textContent = await r.text(); return; }
         const blob = await r.blob();
-        out.innerHTML = `<audio controls src="${URL.createObjectURL(blob)}"></audio>`;
+        out.innerHTML = `<audio id="audio-out" controls src="${URL.createObjectURL(blob)}"></audio><button onclick="mute('out')">Mute</button><button onclick="solo('out')">Solo</button>`;
+      }
+
+      async function runMusic2(scale, bpm) {
+        const prompt = document.getElementById('music-q2').value;
+        const out = document.getElementById('music-out2');
+        out.textContent = 'generating...';
+        const r = await fetch('/api/music', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, scale, bpm })
+        });
+        if (!r.ok) { out.textContent = await r.text(); return; }
+        const blob = await r.blob();
+        out.innerHTML = `<audio id="audio-out2" controls src="${URL.createObjectURL(blob)}"></audio><button onclick="mute('out2')">Mute</button><button onclick="solo('out2')">Solo</button>`;
+      }
+
+      async function runMusic3(scale, bpm) {
+        const prompt = document.getElementById('music-q3').value;
+        const out = document.getElementById('music-out3');
+        out.textContent = 'generating...';
+        const r = await fetch('/api/music', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, scale, bpm })
+        });
+        if (!r.ok) { out.textContent = await r.text(); return; }
+        const blob = await r.blob();
+        out.innerHTML = `<audio id="audio-out3" controls src="${URL.createObjectURL(blob)}"></audio><button onclick="mute('out3')">Mute</button><button onclick="solo('out3')">Solo</button>`;
+      }
+
+      let soloedId = null;
+
+      function playAll() {
+        const audio1 = document.getElementById('audio-out');
+        const audio2 = document.getElementById('audio-out2');
+        const audio3 = document.getElementById('audio-out3');
+        if (audio1) audio1.play();
+        if (audio2) audio2.play();
+        if (audio3) audio3.play();
+      }
+
+      function mute(id) {
+        const audio = document.getElementById('audio-' + id);
+        if (audio) audio.muted = !audio.muted;
+      }
+
+      function solo(id) {
+        const audioIds = ['out', 'out2', 'out3'];
+        if (soloedId === id) {
+          // Unsolo all
+          audioIds.forEach(aid => {
+            const audio = document.getElementById('audio-' + aid);
+            if (audio) audio.muted = false;
+          });
+          soloedId = null;
+        } else {
+          // Solo this one
+          audioIds.forEach(aid => {
+            const audio = document.getElementById('audio-' + aid);
+            if (audio) {
+              if (aid === id) audio.muted = false;
+              else audio.muted = true;
+            }
+          });
+          soloedId = id;
+        }
       }
 
       function blobToBase64(blob) {
@@ -167,6 +274,21 @@
           reader.readAsDataURL(blob);
         });
       }
+
+      // Randomize initial genre
+      const genres = [
+        "ambient synth shoe gaze",
+        "jungle with lots of drum breaks",
+        "acid house",
+        "ghetto tech",
+        "east coast hardcore rap",
+        "90s detroit techno",
+        "visaya rock",
+        "intelligent dance music",
+        "psychadelic rock",
+        "drum and bass"
+      ];
+      document.getElementById('gem-q').value = genres[Math.floor(Math.random() * genres.length)];
     </script>
   </body>
 </html>
